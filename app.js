@@ -86,7 +86,6 @@ function setupFilters(){
   populateSelect('originFilter', t.map(r=>r.origin));
   populateSelect('airlineFilter', t.map(r=>r.airline));
   populateSelect('yearFilter', t.map(r=>String(r.year)));
-  populateSelect('gfOriginFilter', workbookData.googleFlights.map(r=>r.origin));
 
   const yearEl = document.getElementById('yearFilter');
   if (!yearEl.dataset.initialized) {
@@ -181,7 +180,7 @@ function updateBarChart(canvasId,name,groups,data,key){
 }
 
 function updateGoogleFlights(){
-  const origin=document.getElementById('gfOriginFilter').value;
+  const origin=document.getElementById('originFilter').value;
   let all=workbookData.googleFlights.filter(r=>origin==='TODOS'||r.origin===origin);
 
   const empty=document.getElementById('gfEmpty');
@@ -250,29 +249,9 @@ function updateGoogleFlights(){
     options
   });
 
-  updateGoogleFlightsKPIs(all);
 }
 
 
-function updateGoogleFlightsKPIs(data){
-  const prices=data.map(r=>r.price).filter(Number.isFinite);
-  const latestDate=data.length ? new Date(Math.max(...data.map(r=>r.searchDate))) : null;
-  const latestRows=latestDate
-    ? data.filter(r=>r.searchDate.toISOString().slice(0,10)===latestDate.toISOString().slice(0,10) && Number.isFinite(r.price))
-    : [];
-
-  document.getElementById('gfKpiCurrent').textContent =
-    latestRows.length ? fmtBRL(avg(latestRows.map(r=>r.price))) : '—';
-  document.getElementById('gfKpiMin').textContent =
-    prices.length ? fmtBRL(Math.min(...prices)) : '—';
-  document.getElementById('gfKpiMax').textContent =
-    prices.length ? fmtBRL(Math.max(...prices)) : '—';
-  document.getElementById('gfKpiAvg').textContent =
-    prices.length ? fmtBRL(avg(prices)) : '—';
-
-  document.getElementById('gfKpiCurrentNote').textContent =
-    latestDate ? `último dia: ${latestDate.toLocaleDateString('pt-BR')}` : '—';
-}
 
 function renderMeasures(){
   const c=document.getElementById('measuresList');
@@ -281,14 +260,23 @@ function renderMeasures(){
 
 function renderMethodology(){
   const c=document.getElementById('methodologyList');
-  const fallback=[
-    {item:'Valor por trecho',definition:'Confirmar na fonte se o preço representa um único trecho ou a viagem completa.'},
-    {item:'Taxas',definition:'Registrar se taxas aeroportuárias, impostos e demais encargos estão incluídos.'},
-    {item:'Mês de referência',definition:'Diferenciar claramente mês da compra/emissão de mês da viagem ou referência estatística.'},
-    {item:'Google Flights',definition:'O histórico é construído pela data da consulta. Não substituir registros antigos.'}
-  ];
-  const list=workbookData.glossary.length?workbookData.glossary.slice(0,7):fallback;
-  c.innerHTML=list.map(g=>`<div class="method-item"><strong>${g.item}</strong><p>${g.definition||''}</p></div>`).join('');
+  c.innerHTML=`
+    <div class="method-text-block">
+      <h3>Tarifa Aérea Média — ANAC</h3>
+      <p>A Tarifa Aérea Média da ANAC representa os valores das passagens efetivamente comercializadas ao público. O indicador é calculado de forma ponderada pelo volume de bilhetes vendidos em cada valor tarifário, portanto não é uma média simples dos preços anunciados. O mês de referência corresponde ao mês em que a passagem foi vendida, e não necessariamente ao mês da viagem.</p>
+      <p>A série utilizada no painel é a <strong>Tarifa Aérea Real Média</strong>, ou seja, os valores são corrigidos pela inflação para permitir comparação ao longo do tempo. Em viagens de ida e volta, o valor é tratado por trecho de origem e destino.</p>
+
+      <h3>O que entra e o que não entra</h3>
+      <p>O indicador considera o valor do serviço de transporte aéreo comercializado. <strong>Não entram</strong> a tarifa de embarque/aeroportuária nem serviços opcionais cobrados separadamente, como bagagem despachada e marcação de assento. Por isso, um reajuste da tarifa aeroportuária pode aumentar o custo final pago pelo passageiro, mas não altera diretamente a Tarifa Aérea Média divulgada pela ANAC.</p>
+
+      <h3>Incentivos e medidas que podem impactar</h3>
+      <p>Algumas medidas não fazem parte do cálculo da tarifa, mas podem influenciar o preço definido pelas companhias. Entre elas estão custo e tributação do QAV, ICMS e outros tributos sobre combustível, preço do petróleo, câmbio, concorrência entre empresas, demanda, ocupação das aeronaves, oferta de voos e assentos, sazonalidade, alterações de malha e incentivos para ampliação da conectividade. Já as tarifas aeroportuárias devem ser tratadas como impacto no <strong>custo total da viagem</strong>, e não como componente da tarifa média ANAC.</p>
+
+      <h3>Google Flights — média mensal</h3>
+      <p>Os valores coletados no Google Flights correspondem ao <strong>menor preço exibido em cada dia</strong> para a rota acompanhada. O valor mensal mostrado no gráfico é calculado pela média aritmética desses menores preços diários disponíveis no mês: soma dos menores preços registrados ÷ número de dias com preço válido.</p>
+      <p>Dias sem valor identificado não entram no cálculo. Quando o mês ainda não terminou, a média é parcial e deve ser interpretada como preliminar. Essa série não é diretamente equivalente à ANAC: a ANAC representa tarifas efetivamente vendidas, enquanto o Google Flights representa o menor preço ofertado observado diariamente.</p>
+    </div>
+  `;
 }
 
 function renderTable(data){
@@ -406,13 +394,17 @@ function renderAll(){
   setupFilters(); updateTimestamp(); renderFiltered(); updateGoogleFlights(); renderMeasures(); renderMethodology();
 }
 
-['originFilter','airlineFilter','yearFilter'].forEach(id=>document.getElementById(id).addEventListener('change',renderFiltered));
-document.getElementById('gfOriginFilter').addEventListener('change',updateGoogleFlights);
+document.getElementById('originFilter').addEventListener('change',()=>{
+  renderFiltered();
+  updateGoogleFlights();
+});
+['airlineFilter','yearFilter'].forEach(id=>document.getElementById(id).addEventListener('change',renderFiltered));
 document.getElementById('clearFilters').addEventListener('click',()=>{
   document.getElementById('originFilter').value='TODOS';
   document.getElementById('airlineFilter').value='TODOS';
   document.getElementById('yearFilter').value=[...document.getElementById('yearFilter').options].some(o=>o.value==='2026')?'2026':'TODOS';
   renderFiltered();
+  updateGoogleFlights();
 });
 document.getElementById('resetBtn').addEventListener('click',loadDefault);
 document.getElementById('fileInput').addEventListener('change',async e=>{

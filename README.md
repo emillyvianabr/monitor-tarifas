@@ -73,3 +73,21 @@ SP • RJ • MG • SC • PR
 - Média mensal Google Flights = média aritmética dos menores preços diários disponíveis no mês.
 - Dias sem observação são excluídos e meses incompletos são considerados preliminares.
 - Nota explícita de que ANAC e Google Flights são métricas diferentes e complementares.
+
+## Atualização v9 — filtro único de origem
+- O gráfico mensal do Google Flights agora usa o mesmo filtro principal de Origem do dashboard.
+- O filtro separado da seção Google Flights foi removido.
+- Ao escolher RJ, SP, MG ou PR no topo, o gráfico Google Flights é atualizado automaticamente.
+- Para SC, enquanto não houver histórico Google Flights carregado, a seção exibirá ausência de dados.
+
+## Atualização v10
+- KPIs internos da seção Google Flights removidos.
+- Google Flights permanece apenas com o gráfico mensal.
+- Metodologia transformada em texto explicativo sobre:
+  - cálculo da Tarifa Aérea Média ANAC;
+  - mês de referência e valores reais;
+  - itens incluídos e excluídos;
+  - diferença entre tarifa aérea e tarifas aeroportuárias;
+  - incentivos e fatores que podem afetar preços;
+  - menor preço diário do Google Flights;
+  - cálculo da média mensal dos menores preços diários.

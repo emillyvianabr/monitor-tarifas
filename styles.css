@@ -202,3 +202,22 @@ code { background:#eef1f5; padding:2px 5px; border-radius:5px; }
 .methodology-list .method-item {
   padding: 13px 0;
 }
+
+/* Metodologia v10 */
+.method-text-block h3{
+  margin:18px 0 7px;
+  font-size:14px;
+  color:#17365D;
+}
+.method-text-block h3:first-child{
+  margin-top:0;
+}
+.method-text-block p{
+  margin:0 0 10px;
+  font-size:13px;
+  line-height:1.6;
+  color:#475467;
+}
+.method-text-block strong{
+  color:#344054;
+}

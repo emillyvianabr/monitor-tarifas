@@ -123,31 +123,10 @@
       <div class="section-title-row">
         <div>
           <p class="eyebrow">GOOGLE FLIGHTS</p>
-          <h2>Histórico observado — últimos 60 dias</h2>
-          <p class="section-desc">Histórico dos preços exibidos pelo Google Flights nos últimos 60 dias. Lacunas indicam dias em que o tooltip não foi exibido de forma legível no vídeo.</p>
-        </div>
-        <div class="mini-filter">
-          <label>Origem
-            <select id="gfOriginFilter"><option value="TODOS">Todos</option></select>
-          </label>
+          <h2>Google Flights — evolução mensal</h2>
+          <p class="section-desc">Média mensal dos menores preços diários observados no Google Flights. Este gráfico responde ao mesmo filtro de Origem usado no restante do dashboard.</p>
         </div>
       </div>
-
-      <div class="gf-kpis">
-        <div class="gf-kpi" data-tooltip="Preço médio observado no último dia disponível para a origem selecionada. Quando 'Todos' está ativo, calcula a média das rotas com valor naquele dia.">
-          <span>Preço atual</span><strong id="gfKpiCurrent">—</strong><small id="gfKpiCurrentNote">—</small>
-        </div>
-        <div class="gf-kpi" data-tooltip="Menor preço observado dentro dos últimos 60 dias para a origem selecionada.">
-          <span>Menor preço</span><strong id="gfKpiMin">—</strong>
-        </div>
-        <div class="gf-kpi" data-tooltip="Maior preço observado dentro dos últimos 60 dias para a origem selecionada.">
-          <span>Maior preço</span><strong id="gfKpiMax">—</strong>
-        </div>
-        <div class="gf-kpi" data-tooltip="Média aritmética dos menores preços diários válidos observados no histórico para a origem selecionada.">
-          <span>Média dos mínimos diários</span><strong id="gfKpiAvg">—</strong>
-        </div>
-      </div>
-
       <div id="gfEmpty" class="empty-state hidden">Ainda não há preços preenchidos na aba <strong>BASE_GOOGLE_FLIGHTS</strong>. Quando você incluir as consultas, o histórico aparece aqui automaticamente.</div>
       <div class="chart-wrap large"><canvas id="googleFlightsChart"></canvas></div>
     </section>
