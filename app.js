@@ -409,23 +409,37 @@ function updateYearComparison(){
 function updateOriginTrendChart(){
   destroyChart('originTrend');
 
-  const selectedYear = Number(document.getElementById('yearFilter').value || 2026);
+  const yearValue = document.getElementById('yearFilter').value;
   const airline = document.getElementById('airlineFilter').value;
 
-  // Este gráfico compara todas as origens, então ignora o filtro principal de origem.
-  let data = workbookData.anac.filter(r => r.year === selectedYear);
-  if(airline !== 'TODOS') data = data.filter(r => r.airline === airline);
+  // Compara todas as origens entre si; por isso ignora o filtro principal de origem.
+  let data = workbookData.tariffs.slice();
+
+  if(yearValue !== 'TODOS'){
+    data = data.filter(r => String(r.year) === yearValue);
+  } else {
+    // Se "Todos" estiver selecionado, usa o ano mais recente disponível
+    // para evitar misturar meses de anos diferentes no mesmo eixo.
+    const latestYear = Math.max(...data.map(r=>r.year).filter(Number.isFinite));
+    data = data.filter(r => r.year === latestYear);
+  }
+
+  if(airline !== 'TODOS'){
+    data = data.filter(r => r.airline === airline);
+  }
 
   const origins = ['RJ','SP','MG','SC','PR'];
-  const months = [...new Set(data.map(r => r.monthNum).filter(Number.isFinite))].sort((a,b)=>a-b);
+  const months = [...new Set(data.map(r => r.month).filter(Number.isFinite))]
+    .sort((a,b)=>a-b);
 
-  const labels = months.map(m => monthNames[m-1] || String(m));
+  const monthNamesOrigin = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const labels = months.map(m => monthNamesOrigin[m] || String(m));
 
   const datasets = origins.map(origin => ({
     label: origin,
     data: months.map(m => {
       const vals = data
-        .filter(r => r.origin === origin && r.monthNum === m)
+        .filter(r => r.origin === origin && r.month === m)
         .map(r => r.fare)
         .filter(Number.isFinite);
       return vals.length ? avg(vals) : null;
@@ -436,6 +450,9 @@ function updateOriginTrendChart(){
     pointRadius: 3,
     pointHoverRadius: 6
   }));
+
+  const canvas = document.getElementById('originTrendChart');
+  if(!canvas) return;
 
   const options = chartBaseOptions();
   options.interaction = {mode:'index', intersect:false};
@@ -449,7 +466,7 @@ function updateOriginTrendChart(){
     }
   };
 
-  charts.originTrend = new Chart(document.getElementById('originTrendChart'),{
+  charts.originTrend = new Chart(canvas,{
     type:'line',
     data:{labels,datasets},
     options

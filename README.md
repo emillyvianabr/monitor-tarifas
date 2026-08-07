@@ -115,3 +115,9 @@ SP • RJ • MG • SC • PR
 - Usa a Tarifa Aérea Média ANAC por mês.
 - Responde ao filtro de ano e companhia.
 - Ignora o filtro de origem propositalmente, pois o objetivo é comparar todas as origens entre si.
+
+## Atualização v15 — correção do gráfico por origem
+- Corrigido erro de referência da base (`workbookData.tariffs`).
+- Corrigido campo de mês (`month`).
+- O gráfico compara RJ, SP, MG, SC e PR mês a mês.
+- Se "Todos" for escolhido no filtro de ano, usa o ano mais recente para não misturar anos no mesmo eixo.
