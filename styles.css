@@ -221,3 +221,42 @@ code { background:#eef1f5; padding:2px 5px; border-radius:5px; }
 .method-text-block strong{
   color:#344054;
 }
+
+/* Incentivos e medidas v12 */
+.measure-group-intro{
+  padding:12px 13px;
+  border-radius:12px;
+  background:#f7f9fb;
+  border:1px solid var(--line);
+  color:#566273;
+  font-size:12px;
+  line-height:1.55;
+}
+.measure-group-title{
+  margin:12px 0 2px;
+  font-size:12px;
+  color:#17365D;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.measure-detail{margin-bottom:9px!important;}
+.measure-impact{
+  margin-top:10px;
+  padding:10px 11px;
+  background:#fafbfc;
+  border-left:3px solid var(--primary);
+  border-radius:7px;
+}
+.measure-impact span{
+  display:block;
+  margin-bottom:4px;
+  color:#344054;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.measure-impact p{
+  font-size:12px!important;
+  line-height:1.55!important;
+}

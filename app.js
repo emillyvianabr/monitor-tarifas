@@ -45,7 +45,7 @@ function normalizeWorkbook(wb){
   })).filter(r => r.searchDate);
 
   const measures = rowsFromSheet(wb,'INCENTIVOS_MEDIDAS').filter(r => r.Medida_Fator).map(r => ({
-    title:r.Medida_Fator, period:r.Inicio_Periodo, scope:r.Abrangencia, effect:r.Efeito_Esperado, detail:r.Detalhe
+    title:r.Medida_Fator, period:r.Inicio_Periodo, scope:r.Abrangencia, effect:r.Efeito_Esperado, detail:r.Detalhe, impact:r.Como_Impacta || ''
   }));
 
   const glossaryRows = rowsFromSheet(wb,'GLOSSARIO_METODOLOGIA',{range:2});
@@ -255,7 +255,30 @@ function updateGoogleFlights(){
 
 function renderMeasures(){
   const c=document.getElementById('measuresList');
-  c.innerHTML=workbookData.measures.length?workbookData.measures.map(m=>`<div class="measure-item"><strong>${m.title}</strong><p>${m.detail||''}</p><div class="measure-meta"><span class="tag">${m.period||'Período não informado'}</span><span class="tag">${m.scope||'Abrangência não informada'}</span>${m.effect?`<span class="tag">${m.effect}</span>`:''}</div></div>`).join(''):'<div class="empty-state">Sem medidas cadastradas.</div>';
+  if(!workbookData.measures.length){
+    c.innerHTML='<div class="empty-state">Sem medidas cadastradas.</div>';
+    return;
+  }
+
+  const costRelief=workbookData.measures.filter(m=>(m.effect||'').includes('↓'));
+  const passengerCost=workbookData.measures.filter(m=>(m.effect||'').includes('↑'));
+
+  const card=m=>`<div class="measure-item">
+    <strong>${m.title}</strong>
+    <p class="measure-detail">${m.detail||''}</p>
+    ${m.impact?`<div class="measure-impact"><span>Como pode impactar</span><p>${m.impact}</p></div>`:''}
+    <div class="measure-meta">
+      <span class="tag">${m.period||'Período não informado'}</span>
+      <span class="tag">${m.scope||'Abrangência não informada'}</span>
+      ${m.effect?`<span class="tag">${m.effect}</span>`:''}
+    </div>
+  </div>`;
+
+  c.innerHTML=`
+    <div class="measure-group-intro">As medidas abaixo não têm o mesmo efeito. Algumas reduzem custos ou pressão financeira das companhias e podem influenciar indiretamente as tarifas; outras, como tarifas aeroportuárias, aumentam o custo final do passageiro, mas <strong>não entram na Tarifa Aérea Média da ANAC</strong>.</div>
+    ${costRelief.length?`<h3 class="measure-group-title">Redução de custos e pressão financeira das aéreas</h3>${costRelief.map(card).join('')}`:''}
+    ${passengerCost.length?`<h3 class="measure-group-title">Aumento do custo total para o passageiro</h3>${passengerCost.map(card).join('')}`:''}
+  `;
 }
 
 function renderMethodology(){

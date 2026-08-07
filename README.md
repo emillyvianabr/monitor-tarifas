@@ -91,3 +91,14 @@ SP • RJ • MG • SC • PR
   - incentivos e fatores que podem afetar preços;
   - menor preço diário do Google Flights;
   - cálculo da média mensal dos menores preços diários.
+
+## Atualização v11
+- Alterado apenas o título do gráfico Google Flights para:
+  "Média mensal do menor preço diário — Google Flights".
+
+
+## Atualização v12
+- Dashboard renomeado para **Monitor de Tarifas Aéreas - Porto Alegre**.
+- Incorporadas todas as medidas da planilha `Acompanhamento tarifas Aéreas Porto Alegre(1).xlsx`.
+- A seção de incentivos agora explica, em cada item, o mecanismo pelo qual a medida pode afetar custos, oferta, liquidez ou o custo final do passageiro.
+- Tarifas aeroportuárias são destacadas separadamente por afetarem o custo final da viagem sem compor a Tarifa Aérea Média da ANAC.
