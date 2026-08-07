@@ -108,3 +108,10 @@ SP • RJ • MG • SC • PR
 - SC passa a aparecer no gráfico "Média mensal do menor preço diário — Google Flights".
 - O gráfico continua respondendo ao filtro principal de Origem.
 - Dias não exibidos claramente no vídeo foram mantidos sem valor, sem estimativa.
+
+## Atualização v14 — evolução por origem
+- Novo gráfico de linhas "Evolução mensal da tarifa média por origem".
+- Compara RJ, SP, MG, SC e PR no mesmo gráfico.
+- Usa a Tarifa Aérea Média ANAC por mês.
+- Responde ao filtro de ano e companhia.
+- Ignora o filtro de origem propositalmente, pois o objetivo é comparar todas as origens entre si.

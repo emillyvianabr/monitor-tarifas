@@ -405,12 +405,64 @@ function updateYearComparison(){
   });
 }
 
+
+function updateOriginTrendChart(){
+  destroyChart('originTrend');
+
+  const selectedYear = Number(document.getElementById('yearFilter').value || 2026);
+  const airline = document.getElementById('airlineFilter').value;
+
+  // Este gráfico compara todas as origens, então ignora o filtro principal de origem.
+  let data = workbookData.anac.filter(r => r.year === selectedYear);
+  if(airline !== 'TODOS') data = data.filter(r => r.airline === airline);
+
+  const origins = ['RJ','SP','MG','SC','PR'];
+  const months = [...new Set(data.map(r => r.monthNum).filter(Number.isFinite))].sort((a,b)=>a-b);
+
+  const labels = months.map(m => monthNames[m-1] || String(m));
+
+  const datasets = origins.map(origin => ({
+    label: origin,
+    data: months.map(m => {
+      const vals = data
+        .filter(r => r.origin === origin && r.monthNum === m)
+        .map(r => r.fare)
+        .filter(Number.isFinite);
+      return vals.length ? avg(vals) : null;
+    }),
+    tension: .28,
+    spanGaps: false,
+    borderWidth: 2.5,
+    pointRadius: 3,
+    pointHoverRadius: 6
+  }));
+
+  const options = chartBaseOptions();
+  options.interaction = {mode:'index', intersect:false};
+  options.plugins.tooltip = {
+    mode:'index',
+    intersect:false,
+    callbacks:{
+      label(ctx){
+        return `${ctx.dataset.label}: ${Number.isFinite(ctx.raw) ? fmtBRL(ctx.raw) : 'sem dados'}`;
+      }
+    }
+  };
+
+  charts.originTrend = new Chart(document.getElementById('originTrendChart'),{
+    type:'line',
+    data:{labels,datasets},
+    options
+  });
+}
+
 function renderFiltered(){
   const data=filteredTariffs();
   updateKPIs(data); updateMonthlyChart(data); updateYearComparison();
   updateBarChart('originChart','origin',[...new Set(data.map(r=>r.origin))].sort(),data,'origin');
   updateBarChart('airlineChart','airline',[...new Set(data.map(r=>r.airline))].sort(),data,'airline');
   renderTable(data);
+  updateOriginTrendChart();
 }
 
 function renderAll(){

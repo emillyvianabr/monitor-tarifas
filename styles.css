@@ -260,3 +260,8 @@ code { background:#eef1f5; padding:2px 5px; border-radius:5px; }
   font-size:12px!important;
   line-height:1.55!important;
 }
+
+/* Gráfico de evolução por origem */
+.chart-wrap.tall{
+  min-height:360px;
+}
