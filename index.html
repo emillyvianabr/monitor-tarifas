@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tarifas Aéreas | Porto Alegre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">INTELIGÊNCIA DE MERCADO</p>
+      <h1>Acompanhamento de Tarifas Aéreas — Porto Alegre</h1>
+      <p class="subtitle">Principais mercados emissores de Gramado e Canela • SP, RJ, SC e PR</p>
+    </div>
+    <div class="top-actions">
+      <label class="upload-btn" for="fileInput">Carregar planilha</label>
+      <input id="fileInput" type="file" accept=".xlsx,.xls" hidden />
+      <button id="resetBtn" class="secondary-btn">Voltar ao arquivo do GitHub</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="status-card">
+      <div>
+        <span class="status-dot"></span>
+        <strong id="dataSourceLabel">Fonte: data/dados.xlsx</strong>
+      </div>
+      <span id="updatedAt">Carregando dados...</span>
+    </section>
+
+    <section class="filters panel">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">FILTROS</p>
+          <h2>Recorte da análise</h2>
+        </div>
+        <button id="clearFilters" class="text-btn">Limpar filtros</button>
+      </div>
+      <div class="filter-grid">
+        <label>Origem
+          <select id="originFilter"><option value="TODOS">Todos</option></select>
+        </label>
+        <label>Aeroporto de origem
+          <select id="airportFilter"><option value="TODOS">Todos</option></select>
+        </label>
+        <label>Companhia
+          <select id="airlineFilter"><option value="TODOS">Todas</option></select>
+        </label>
+        <label>Ano
+          <select id="yearFilter"><option value="TODOS">Todos</option></select>
+        </label>
+      </div>
+      <div class="period-note">Período-base preparado: <strong>jan/2025 a jun/2026</strong>. Novos meses adicionados na planilha entram automaticamente.</div>
+    </section>
+
+    <section class="kpis">
+      <article class="kpi-card">
+        <span>Tarifa média</span>
+        <strong id="kpiAvg">—</strong>
+        <small id="kpiAvgNote">recorte selecionado</small>
+      </article>
+      <article class="kpi-card">
+        <span>Menor tarifa média</span>
+        <strong id="kpiMin">—</strong>
+        <small id="kpiMinNote">—</small>
+      </article>
+      <article class="kpi-card">
+        <span>Maior tarifa média</span>
+        <strong id="kpiMax">—</strong>
+        <small id="kpiMaxNote">—</small>
+      </article>
+      <article class="kpi-card">
+        <span>Variação anual</span>
+        <strong id="kpiYoY">—</strong>
+        <small id="kpiYoYNote">meses comparáveis</small>
+      </article>
+    </section>
+
+    <section class="chart-grid">
+      <article class="panel chart-panel wide">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">EVOLUÇÃO MENSAL</p>
+            <h2>Tarifa média por companhia</h2>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="monthlyChart"></canvas></div>
+      </article>
+
+      <article class="panel chart-panel">
+        <div>
+          <p class="eyebrow">ORIGEM</p>
+          <h2>Tarifa média por mercado emissor</h2>
+        </div>
+        <div class="chart-wrap"><canvas id="originChart"></canvas></div>
+      </article>
+
+      <article class="panel chart-panel">
+        <div>
+          <p class="eyebrow">COMPANHIAS</p>
+          <h2>Comparativo de tarifa média</h2>
+        </div>
+        <div class="chart-wrap"><canvas id="airlineChart"></canvas></div>
+      </article>
+    </section>
+
+    <section class="panel google-section">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">GOOGLE FLIGHTS</p>
+          <h2>Histórico observado — últimos 60 dias</h2>
+          <p class="section-desc">Cada nova consulta deve ser adicionada como uma linha, mantendo o histórico em vez de substituir valores anteriores.</p>
+        </div>
+        <div class="mini-filter">
+          <label>Origem
+            <select id="gfOriginFilter"><option value="TODOS">Todos</option></select>
+          </label>
+        </div>
+      </div>
+      <div id="gfEmpty" class="empty-state hidden">Ainda não há preços preenchidos na aba <strong>BASE_GOOGLE_FLIGHTS</strong>. Quando você incluir as consultas, o histórico aparece aqui automaticamente.</div>
+      <div class="chart-wrap large"><canvas id="googleFlightsChart"></canvas></div>
+    </section>
+
+    <section class="two-col">
+      <article class="panel">
+        <p class="eyebrow">CONTEXTO</p>
+        <h2>Incentivos e medidas</h2>
+        <div id="measuresList" class="measure-list"></div>
+      </article>
+
+      <article class="panel">
+        <p class="eyebrow">METODOLOGIA</p>
+        <h2>Como ler os valores</h2>
+        <div id="methodologyList" class="methodology-list"></div>
+      </article>
+    </section>
+
+    <section class="panel table-section">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">BASE FILTRADA</p>
+          <h2>Detalhamento mensal</h2>
+        </div>
+        <span id="rowCount" class="badge">0 registros</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Mês</th><th>Origem</th><th>Aeroporto</th><th>Companhia</th><th>Tarifa média</th><th>Fonte</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Dashboard preparado para GitHub Pages • atualização via <code>data/dados.xlsx</code>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
