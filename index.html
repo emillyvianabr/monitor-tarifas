@@ -16,7 +16,7 @@
     <div>
       <p class="eyebrow">INTELIGÊNCIA DE MERCADO</p>
       <h1>Acompanhamento de Tarifas Aéreas — Porto Alegre</h1>
-      <p class="subtitle">Principais mercados emissores de Gramado e Canela • SP, RJ, SC e PR</p>
+      <p class="subtitle">Principais mercados emissores de Gramado e Canela • SP, RJ, MG, SC e PR</p>
     </div>
     <div class="top-actions">
       <label class="upload-btn" for="fileInput">Carregar planilha</label>
@@ -45,9 +45,6 @@
       <div class="filter-grid">
         <label>Origem
           <select id="originFilter"><option value="TODOS">Todos</option></select>
-        </label>
-        <label>Aeroporto de origem
-          <select id="airportFilter"><option value="TODOS">Todos</option></select>
         </label>
         <label>Companhia
           <select id="airlineFilter"><option value="TODOS">Todas</option></select>
@@ -80,6 +77,18 @@
         <strong id="kpiYoY">—</strong>
         <small id="kpiYoYNote">meses comparáveis</small>
       </article>
+    </section>
+
+
+    <section class="panel chart-panel wide comparison-panel">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">COMPARATIVO ANUAL</p>
+          <h2>2025 × 2026 — tarifa média mensal</h2>
+          <p class="section-desc">O gráfico responde ao filtro de origem e de companhia. Para 2026, estão disponíveis dados até junho.</p>
+        </div>
+      </div>
+      <div class="chart-wrap large"><canvas id="yearComparisonChart"></canvas></div>
     </section>
 
     <section class="chart-grid">
@@ -153,7 +162,7 @@
         <table>
           <thead>
             <tr>
-              <th>Mês</th><th>Origem</th><th>Aeroporto</th><th>Companhia</th><th>Tarifa média</th><th>Fonte</th>
+              <th>Mês</th><th>Origem</th><th>Companhia</th><th>Tarifa média</th><th>Fonte</th>
             </tr>
           </thead>
           <tbody id="dataTableBody"></tbody>

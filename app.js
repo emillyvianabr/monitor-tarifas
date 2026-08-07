@@ -83,20 +83,23 @@ function populateSelect(id, values){
 function setupFilters(){
   const t = workbookData.tariffs;
   populateSelect('originFilter', t.map(r=>r.origin));
-  populateSelect('airportFilter', t.map(r=>r.airport));
   populateSelect('airlineFilter', t.map(r=>r.airline));
   populateSelect('yearFilter', t.map(r=>String(r.year)));
   populateSelect('gfOriginFilter', workbookData.googleFlights.map(r=>r.origin));
+
+  const yearEl = document.getElementById('yearFilter');
+  if (!yearEl.dataset.initialized) {
+    if ([...yearEl.options].some(o => o.value === '2026')) yearEl.value = '2026';
+    yearEl.dataset.initialized = 'true';
+  }
 }
 
 function filteredTariffs(){
   const origin=document.getElementById('originFilter').value;
-  const airport=document.getElementById('airportFilter').value;
   const airline=document.getElementById('airlineFilter').value;
   const year=document.getElementById('yearFilter').value;
   return workbookData.tariffs.filter(r =>
     (origin==='TODOS'||r.origin===origin) &&
-    (airport==='TODOS'||r.airport===airport) &&
     (airline==='TODOS'||r.airline===airline) &&
     (year==='TODOS'||String(r.year)===year)
   );
@@ -175,7 +178,7 @@ function renderMethodology(){
 function renderTable(data){
   document.getElementById('rowCount').textContent=`${data.length} registro${data.length===1?'':'s'}`;
   const tbody=document.getElementById('dataTableBody');
-  tbody.innerHTML=data.slice().sort((a,b)=>a.year-b.year||a.month-b.month||a.airline.localeCompare(b.airline)).map(r=>`<tr><td>${monthLabel(r.year,r.month)}</td><td>${r.origin}</td><td>${r.airport||'—'}</td><td>${r.airline}</td><td>${fmtBRL(r.fare)}</td><td>${r.source||'—'}</td></tr>`).join('');
+  tbody.innerHTML=data.slice().sort((a,b)=>a.year-b.year||a.month-b.month||a.airline.localeCompare(b.airline)).map(r=>`<tr><td>${monthLabel(r.year,r.month)}</td><td>${r.origin}</td><td>${r.airline}</td><td>${fmtBRL(r.fare)}</td><td>${r.source||'—'}</td></tr>`).join('');
 }
 
 function updateTimestamp(){
@@ -184,9 +187,39 @@ function updateTimestamp(){
   document.getElementById('updatedAt').textContent=latest?`Última atualização informada: ${latest.toLocaleDateString('pt-BR')}`:`${workbookData.tariffs.length} tarifas válidas carregadas`;
 }
 
+
+function updateYearComparison(){
+  destroyChart('yearComparison');
+  const origin=document.getElementById('originFilter').value;
+  const airline=document.getElementById('airlineFilter').value;
+
+  const data=workbookData.tariffs.filter(r =>
+    (origin==='TODOS'||r.origin===origin) &&
+    (airline==='TODOS'||r.airline===airline) &&
+    (r.year===2025||r.year===2026)
+  );
+
+  const labels=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const seriesFor = year => labels.map((_,i) =>
+    avg(data.filter(r=>r.year===year && r.month===i+1).map(r=>r.fare))
+  );
+
+  charts.yearComparison=new Chart(document.getElementById('yearComparisonChart'),{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'2025',data:seriesFor(2025),tension:.28,spanGaps:true,borderWidth:2.5,pointRadius:3},
+        {label:'2026',data:seriesFor(2026),tension:.28,spanGaps:true,borderWidth:2.5,pointRadius:3}
+      ]
+    },
+    options:chartBaseOptions()
+  });
+}
+
 function renderFiltered(){
   const data=filteredTariffs();
-  updateKPIs(data); updateMonthlyChart(data);
+  updateKPIs(data); updateMonthlyChart(data); updateYearComparison();
   updateBarChart('originChart','origin',[...new Set(data.map(r=>r.origin))].sort(),data,'origin');
   updateBarChart('airlineChart','airline',[...new Set(data.map(r=>r.airline))].sort(),data,'airline');
   renderTable(data);
@@ -196,9 +229,14 @@ function renderAll(){
   setupFilters(); updateTimestamp(); renderFiltered(); updateGoogleFlights(); renderMeasures(); renderMethodology();
 }
 
-['originFilter','airportFilter','airlineFilter','yearFilter'].forEach(id=>document.getElementById(id).addEventListener('change',renderFiltered));
+['originFilter','airlineFilter','yearFilter'].forEach(id=>document.getElementById(id).addEventListener('change',renderFiltered));
 document.getElementById('gfOriginFilter').addEventListener('change',updateGoogleFlights);
-document.getElementById('clearFilters').addEventListener('click',()=>{['originFilter','airportFilter','airlineFilter','yearFilter'].forEach(id=>document.getElementById(id).value='TODOS');renderFiltered();});
+document.getElementById('clearFilters').addEventListener('click',()=>{
+  document.getElementById('originFilter').value='TODOS';
+  document.getElementById('airlineFilter').value='TODOS';
+  document.getElementById('yearFilter').value=[...document.getElementById('yearFilter').options].some(o=>o.value==='2026')?'2026':'TODOS';
+  renderFiltered();
+});
 document.getElementById('resetBtn').addEventListener('click',loadDefault);
 document.getElementById('fileInput').addEventListener('change',async e=>{
   const file=e.target.files[0]; if(!file) return;

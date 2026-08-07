@@ -70,3 +70,10 @@ code { background:#eef1f5; padding:2px 5px; border-radius:5px; }
   .topbar{align-items:flex-start;flex-direction:column}.filter-grid,.kpis{grid-template-columns:1fr 1fr}.chart-grid,.two-col{grid-template-columns:1fr}.chart-panel.wide{grid-column:auto}
 }
 @media (max-width:600px){.filter-grid,.kpis{grid-template-columns:1fr}.status-card{flex-direction:column}.section-title-row{flex-direction:column}.page{width:94vw}}
+
+/* v3 */
+.filters .filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.comparison-panel { margin-bottom: 20px; }
+@media (max-width: 800px) {
+  .filters .filter-grid { grid-template-columns: 1fr; }
+}

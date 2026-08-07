@@ -35,3 +35,13 @@ O modelo já está preparado para jan/2025 a jun/2026 e aceita meses posteriores
 6. Salve.
 
 > Importante: ao abrir `index.html` diretamente pelo Explorador do Windows, o navegador pode bloquear a leitura automática do Excel. No GitHub Pages isso funciona normalmente. Para teste local, você também pode usar o botão “Carregar planilha”.
+
+
+## Mercados emissores prioritários
+SP • RJ • MG • SC • PR
+
+## Atualização v3
+- Filtro de aeroporto removido.
+- Ano padrão: 2026.
+- Novo gráfico mensal comparando 2025 × 2026, filtrável por origem e companhia.
+- Base preenchida com os dados transcritos dos prints de RJ, SP, MG, SC e PR.
