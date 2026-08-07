@@ -56,3 +56,20 @@ SP • RJ • MG • SC • PR
 ## Atualização v5
 - Tooltips explicativos adicionados aos KPIs.
 - Ao passar o mouse sobre Tarifa média, Menor tarifa, Maior tarifa e Variação anual, o painel explica o indicador e sua lógica de cálculo.
+
+## Atualização v6 — Google Flights
+- Históricos de RJ, SP/GRU, MG/CNF e PR/CWB consolidados na aba BASE_GOOGLE_FLIGHTS.
+- Gráfico diário dos últimos 60 dias.
+- Filtro por origem.
+- No modo Todos, cada rota aparece como uma série separada.
+- Lacunas são preservadas quando o vídeo não exibiu um valor.
+- KPIs de preço atual, mínimo, máximo e média dos 60 dias.
+
+## Atualização v8 — metodologia
+- Metodologia ANAC detalhada: cálculo ponderado por bilhetes comercializados, mês de venda, valores reais pelo IPCA, inclusões e exclusões.
+- Tarifa de embarque/aeroportuária explicitamente identificada como fora da Tarifa Aérea Média ANAC.
+- Fatores de custo, oferta, demanda e incentivos separados dos componentes do indicador.
+- Google Flights definido como menor preço observado por dia.
+- Média mensal Google Flights = média aritmética dos menores preços diários disponíveis no mês.
+- Dias sem observação são excluídos e meses incompletos são considerados preliminares.
+- Nota explícita de que ANAC e Google Flights são métricas diferentes e complementares.

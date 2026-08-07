@@ -133,3 +133,72 @@ code { background:#eef1f5; padding:2px 5px; border-radius:5px; }
 .kpi-card[data-tooltip]:focus-within::after {
   transform: translateX(-50%) translateY(0);
 }
+
+/* Google Flights KPIs */
+.gf-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  margin:16px 0 10px;
+}
+.gf-kpi{
+  position:relative;
+  padding:14px 16px;
+  border:1px solid var(--line,#e7ebf0);
+  border-radius:14px;
+  background:#fff;
+  cursor:help;
+}
+.gf-kpi span{
+  display:block;
+  font-size:12px;
+  color:#667085;
+  margin-bottom:6px;
+}
+.gf-kpi strong{
+  display:block;
+  font-size:22px;
+  line-height:1.1;
+  color:#17365D;
+}
+.gf-kpi small{
+  display:block;
+  margin-top:5px;
+  color:#98A2B3;
+  font-size:11px;
+}
+.gf-kpi[data-tooltip]::after{
+  content:attr(data-tooltip);
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 8px);
+  transform:translateX(-50%) translateY(5px);
+  width:min(300px,80vw);
+  padding:9px 11px;
+  border-radius:9px;
+  background:rgba(17,24,39,.96);
+  color:#fff;
+  font-size:12px;
+  line-height:1.4;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:.15s ease;
+  z-index:1000;
+}
+.gf-kpi[data-tooltip]:hover::after{
+  opacity:1;
+  visibility:visible;
+  transform:translateX(-50%) translateY(0);
+}
+@media(max-width:800px){
+  .gf-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+
+/* Metodologia v8 */
+.methodology-list .method-item p {
+  line-height: 1.55;
+}
+.methodology-list .method-item {
+  padding: 13px 0;
+}

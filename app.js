@@ -40,8 +40,9 @@ function normalizeWorkbook(wb){
   const googleFlights = rowsFromSheet(wb,'BASE_GOOGLE_FLIGHTS').map(r => ({
     searchDate: excelDate(r.Data_Busca), origin:r.Estado_Origem || 'Não informado', airport:r.Aeroporto_Origem || '',
     airline:r.Companhia || 'Não informado', price:num(r['Preco_R$']), tripType:r.Tipo_Viagem || '',
-    outbound:excelDate(r.Data_Ida), returnDate:excelDate(r.Data_Volta)
-  })).filter(r => r.searchDate && Number.isFinite(r.price));
+    outbound:excelDate(r.Data_Ida), returnDate:excelDate(r.Data_Volta),
+    source:r.Fonte || 'Google Flights', note:r.Observacao || ''
+  })).filter(r => r.searchDate);
 
   const measures = rowsFromSheet(wb,'INCENTIVOS_MEDIDAS').filter(r => r.Medida_Fator).map(r => ({
     title:r.Medida_Fator, period:r.Inicio_Periodo, scope:r.Abrangencia, effect:r.Efeito_Esperado, detail:r.Detalhe
@@ -181,16 +182,96 @@ function updateBarChart(canvasId,name,groups,data,key){
 
 function updateGoogleFlights(){
   const origin=document.getElementById('gfOriginFilter').value;
-  let data=workbookData.googleFlights.filter(r=>origin==='TODOS'||r.origin===origin);
-  if(data.length){ const maxDate=new Date(Math.max(...data.map(r=>r.searchDate))); const cutoff=new Date(maxDate); cutoff.setDate(cutoff.getDate()-59); data=data.filter(r=>r.searchDate>=cutoff); }
+  let all=workbookData.googleFlights.filter(r=>origin==='TODOS'||r.origin===origin);
+
   const empty=document.getElementById('gfEmpty');
   destroyChart('gf');
-  if(!data.length){ empty.classList.remove('hidden'); document.getElementById('googleFlightsChart').style.display='none'; return; }
-  empty.classList.add('hidden'); document.getElementById('googleFlightsChart').style.display='block';
-  const dates=[...new Set(data.map(r=>r.searchDate.toISOString().slice(0,10)))].sort();
-  const origins=[...new Set(data.map(r=>r.origin))].sort();
-  const datasets=origins.map(o=>({label:o,data:dates.map(d=>avg(data.filter(r=>r.origin===o&&r.searchDate.toISOString().slice(0,10)===d).map(r=>r.price))),tension:.3,spanGaps:true,borderWidth:2,pointRadius:2}));
-  charts.gf=new Chart(document.getElementById('googleFlightsChart'),{type:'line',data:{labels:dates.map(d=>new Date(d+'T12:00:00').toLocaleDateString('pt-BR')),datasets},options:chartBaseOptions()});
+
+  if(!all.length){
+    empty.classList.remove('hidden');
+    document.getElementById('googleFlightsChart').style.display='none';
+    return;
+  }
+
+  empty.classList.add('hidden');
+  document.getElementById('googleFlightsChart').style.display='block';
+
+  const monthKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  const monthLabelGF = key => {
+    const [y,m]=key.split('-').map(Number);
+    return new Date(y,m-1,1)
+      .toLocaleDateString('pt-BR',{month:'short',year:'numeric'})
+      .replace('.','');
+  };
+
+  const allMonthKeys=[...new Set(all.map(r=>monthKey(r.searchDate)))].sort();
+
+  const routes=[...new Map(
+    all.map(r=>[`${r.origin}|${r.airport}`, {origin:r.origin,airport:r.airport}])
+  ).values()].sort((a,b)=>a.origin.localeCompare(b.origin));
+
+  const datasets=routes.map(route=>{
+    const routeRows=all.filter(r=>r.origin===route.origin && r.airport===route.airport);
+    return {
+      label:`${route.origin} (${route.airport})`,
+      data:allMonthKeys.map(key=>{
+        const values=routeRows
+          .filter(r=>monthKey(r.searchDate)===key)
+          .map(r=>r.price)
+          .filter(Number.isFinite);
+        return values.length ? avg(values) : null;
+      }),
+      tension:.25,
+      spanGaps:false,
+      borderWidth:2.5,
+      pointRadius:4,
+      pointHoverRadius:6
+    };
+  });
+
+  const options=chartBaseOptions();
+  options.interaction={mode:'index',intersect:false};
+  options.plugins.tooltip={
+    mode:'index',
+    intersect:false,
+    callbacks:{
+      label(ctx){
+        return `${ctx.dataset.label}: ${Number.isFinite(ctx.raw)?fmtBRL(ctx.raw):'sem dados'}`;
+      }
+    }
+  };
+
+  charts.gf=new Chart(document.getElementById('googleFlightsChart'),{
+    type:'line',
+    data:{
+      labels:allMonthKeys.map(monthLabelGF),
+      datasets
+    },
+    options
+  });
+
+  updateGoogleFlightsKPIs(all);
+}
+
+
+function updateGoogleFlightsKPIs(data){
+  const prices=data.map(r=>r.price).filter(Number.isFinite);
+  const latestDate=data.length ? new Date(Math.max(...data.map(r=>r.searchDate))) : null;
+  const latestRows=latestDate
+    ? data.filter(r=>r.searchDate.toISOString().slice(0,10)===latestDate.toISOString().slice(0,10) && Number.isFinite(r.price))
+    : [];
+
+  document.getElementById('gfKpiCurrent').textContent =
+    latestRows.length ? fmtBRL(avg(latestRows.map(r=>r.price))) : '—';
+  document.getElementById('gfKpiMin').textContent =
+    prices.length ? fmtBRL(Math.min(...prices)) : '—';
+  document.getElementById('gfKpiMax').textContent =
+    prices.length ? fmtBRL(Math.max(...prices)) : '—';
+  document.getElementById('gfKpiAvg').textContent =
+    prices.length ? fmtBRL(avg(prices)) : '—';
+
+  document.getElementById('gfKpiCurrentNote').textContent =
+    latestDate ? `último dia: ${latestDate.toLocaleDateString('pt-BR')}` : '—';
 }
 
 function renderMeasures(){
