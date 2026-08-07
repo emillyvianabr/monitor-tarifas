@@ -102,3 +102,9 @@ SP • RJ • MG • SC • PR
 - Incorporadas todas as medidas da planilha `Acompanhamento tarifas Aéreas Porto Alegre(1).xlsx`.
 - A seção de incentivos agora explica, em cada item, o mecanismo pelo qual a medida pode afetar custos, oferta, liquidez ou o custo final do passageiro.
 - Tarifas aeroportuárias são destacadas separadamente por afetarem o custo final da viagem sem compor a Tarifa Aérea Média da ANAC.
+
+## Atualização v13 — Santa Catarina
+- Adicionado histórico Google Flights de Florianópolis (FLN) → Porto Alegre (POA).
+- SC passa a aparecer no gráfico "Média mensal do menor preço diário — Google Flights".
+- O gráfico continua respondendo ao filtro principal de Origem.
+- Dias não exibidos claramente no vídeo foram mantidos sem valor, sem estimativa.
