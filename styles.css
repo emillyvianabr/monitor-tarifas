@@ -77,3 +77,59 @@ code { background:#eef1f5; padding:2px 5px; border-radius:5px; }
 @media (max-width: 800px) {
   .filters .filter-grid { grid-template-columns: 1fr; }
 }
+
+/* KPI tooltips */
+.kpi-card[data-tooltip] {
+  position: relative;
+  cursor: help;
+}
+
+.kpi-card[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%) translateY(6px);
+  width: min(320px, 80vw);
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(17, 24, 39, 0.96);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease, visibility .15s ease;
+  z-index: 999;
+  white-space: normal;
+}
+
+.kpi-card[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(17, 24, 39, 0.96);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .15s ease, visibility .15s ease;
+  z-index: 1000;
+}
+
+.kpi-card[data-tooltip]:hover::after,
+.kpi-card[data-tooltip]:focus-within::after,
+.kpi-card[data-tooltip]:hover::before,
+.kpi-card[data-tooltip]:focus-within::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+.kpi-card[data-tooltip]:hover::after,
+.kpi-card[data-tooltip]:focus-within::after {
+  transform: translateX(-50%) translateY(0);
+}

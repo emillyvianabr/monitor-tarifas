@@ -112,18 +112,53 @@ function updateKPIs(data){
   const mean=avg(fares);
   const minRow=data.reduce((a,b)=>!a||b.fare<a.fare?b:a,null);
   const maxRow=data.reduce((a,b)=>!a||b.fare>a.fare?b:a,null);
+
   document.getElementById('kpiAvg').textContent=fmtBRL(mean);
   document.getElementById('kpiMin').textContent=minRow?fmtBRL(minRow.fare):'—';
   document.getElementById('kpiMinNote').textContent=minRow?`${monthLabel(minRow.year,minRow.month)} • ${minRow.airline}`:'—';
   document.getElementById('kpiMax').textContent=maxRow?fmtBRL(maxRow.fare):'—';
   document.getElementById('kpiMaxNote').textContent=maxRow?`${monthLabel(maxRow.year,maxRow.month)} • ${maxRow.airline}`:'—';
 
-  const byYM={}; data.forEach(r=>{ const k=`${r.year}-${r.month}`; (byYM[k] ||= []).push(r.fare); });
-  const pairs=[];
-  Object.keys(byYM).forEach(k=>{ const [y,m]=k.split('-').map(Number); const prev=`${y-1}-${m}`; if(byYM[prev]) pairs.push([avg(byYM[k]),avg(byYM[prev])]); });
-  const yoy = pairs.length ? avg(pairs.map(([cur,prev])=>(cur/prev-1)*100)) : null;
-  const yoyEl=document.getElementById('kpiYoY'); yoyEl.textContent=fmtPct(yoy); yoyEl.className = Number.isFinite(yoy) ? (yoy>0?'positive':'negative') : '';
-  document.getElementById('kpiYoYNote').textContent = pairs.length ? `${pairs.length} mês(es) comparável(is)` : 'sem meses comparáveis';
+  // Variação anual usa sempre os mesmos meses disponíveis nos dois anos.
+  // Ao trocar o filtro de ano, a direção da comparação é invertida.
+  const origin=document.getElementById('originFilter').value;
+  const airline=document.getElementById('airlineFilter').value;
+  const selectedYear=document.getElementById('yearFilter').value;
+
+  const comparisonData=workbookData.tariffs.filter(r =>
+    (origin==='TODOS'||r.origin===origin) &&
+    (airline==='TODOS'||r.airline===airline) &&
+    (r.year===2025||r.year===2026)
+  );
+
+  const months2025=[...new Set(comparisonData.filter(r=>r.year===2025).map(r=>r.month))];
+  const months2026=[...new Set(comparisonData.filter(r=>r.year===2026).map(r=>r.month))];
+  const comparableMonths=months2025.filter(m=>months2026.includes(m)).sort((a,b)=>a-b);
+
+  let currentYear = selectedYear==='2025' ? 2025 : 2026;
+  let comparisonYear = currentYear===2026 ? 2025 : 2026;
+
+  const currentAvg=avg(comparisonData
+    .filter(r=>r.year===currentYear && comparableMonths.includes(r.month))
+    .map(r=>r.fare));
+  const comparisonAvg=avg(comparisonData
+    .filter(r=>r.year===comparisonYear && comparableMonths.includes(r.month))
+    .map(r=>r.fare));
+
+  const yoy=(Number.isFinite(currentAvg)&&Number.isFinite(comparisonAvg)&&comparisonAvg!==0)
+    ? (currentAvg/comparisonAvg-1)*100
+    : null;
+
+  const yoyEl=document.getElementById('kpiYoY');
+  yoyEl.textContent=fmtPct(yoy);
+  yoyEl.className = Number.isFinite(yoy) ? (yoy>0?'positive':yoy<0?'negative':'') : '';
+
+  const lastMonth=comparableMonths.length?comparableMonths[comparableMonths.length-1]:null;
+  const monthNamesShort=['','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  document.getElementById('kpiYoYNote').textContent =
+    comparableMonths.length
+      ? `${currentYear} vs ${comparisonYear} • jan–${monthNamesShort[lastMonth]}`
+      : 'sem meses comparáveis';
 }
 
 function chartBaseOptions(){
@@ -190,8 +225,10 @@ function updateTimestamp(){
 
 function updateYearComparison(){
   destroyChart('yearComparison');
+
   const origin=document.getElementById('originFilter').value;
   const airline=document.getElementById('airlineFilter').value;
+  const selectedYear=document.getElementById('yearFilter').value;
 
   const data=workbookData.tariffs.filter(r =>
     (origin==='TODOS'||r.origin===origin) &&
@@ -199,21 +236,80 @@ function updateYearComparison(){
     (r.year===2025||r.year===2026)
   );
 
-  const labels=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const seriesFor = year => labels.map((_,i) =>
-    avg(data.filter(r=>r.year===year && r.month===i+1).map(r=>r.fare))
+  // Mostra somente meses que existem nos dois anos.
+  // Assim 2025 acompanha exatamente o período disponível de 2026.
+  const months2025=[...new Set(data.filter(r=>r.year===2025).map(r=>r.month))];
+  const months2026=[...new Set(data.filter(r=>r.year===2026).map(r=>r.month))];
+  const comparableMonths=months2025.filter(m=>months2026.includes(m)).sort((a,b)=>a-b);
+
+  const monthLabels=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const labels=comparableMonths.map(m=>monthLabels[m]);
+
+  const seriesFor = year => comparableMonths.map(m =>
+    avg(data.filter(r=>r.year===year && r.month===m).map(r=>r.fare))
   );
+
+  const y2025=seriesFor(2025);
+  const y2026=seriesFor(2026);
+
+  // A direção das variações acompanha o ano selecionado no filtro.
+  const currentYear = selectedYear==='2025' ? 2025 : 2026;
+  const currentSeries = currentYear===2026 ? y2026 : y2025;
+  const comparisonSeries = currentYear===2026 ? y2025 : y2026;
+  const monthlyVariation=currentSeries.map((v,i)=>{
+    const base=comparisonSeries[i];
+    return Number.isFinite(v)&&Number.isFinite(base)&&base!==0 ? (v/base-1)*100 : null;
+  });
+
+  const variationLabelsPlugin={
+    id:'variationLabels',
+    afterDatasetsDraw(chart){
+      const {ctx}=chart;
+      const meta=chart.getDatasetMeta(currentYear===2026 ? 1 : 0);
+      ctx.save();
+      ctx.font='600 11px Inter, Arial, sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='bottom';
+
+      monthlyVariation.forEach((variation,i)=>{
+        if(!Number.isFinite(variation) || !meta.data[i]) return;
+        const point=meta.data[i];
+        const text=`${variation>0?'+':''}${variation.toFixed(1).replace('.',',')}%`;
+        ctx.fillStyle=variation>0 ? '#b42318' : variation<0 ? '#027a48' : '#667085';
+        ctx.fillText(text, point.x, point.y-10);
+      });
+      ctx.restore();
+    }
+  };
+
+  const options=chartBaseOptions();
+  options.layout={padding:{top:24}};
+  options.plugins.tooltip={
+    mode:'index',
+    intersect:false,
+    callbacks:{
+      afterBody(items){
+        if(!items.length) return '';
+        const i=items[0].dataIndex;
+        const v=monthlyVariation[i];
+        return Number.isFinite(v)
+          ? `Variação ${currentYear} vs ${currentYear===2026?2025:2026}: ${v>0?'+':''}${v.toFixed(1).replace('.',',')}%`
+          : '';
+      }
+    }
+  };
 
   charts.yearComparison=new Chart(document.getElementById('yearComparisonChart'),{
     type:'line',
     data:{
       labels,
       datasets:[
-        {label:'2025',data:seriesFor(2025),tension:.28,spanGaps:true,borderWidth:2.5,pointRadius:3},
-        {label:'2026',data:seriesFor(2026),tension:.28,spanGaps:true,borderWidth:2.5,pointRadius:3}
+        {label:'2025',data:y2025,tension:.28,spanGaps:true,borderWidth:2.5,pointRadius:4},
+        {label:'2026',data:y2026,tension:.28,spanGaps:true,borderWidth:2.5,pointRadius:4}
       ]
     },
-    options:chartBaseOptions()
+    options,
+    plugins:[variationLabelsPlugin]
   });
 }
 

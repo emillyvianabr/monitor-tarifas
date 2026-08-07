@@ -45,3 +45,14 @@ SP • RJ • MG • SC • PR
 - Ano padrão: 2026.
 - Novo gráfico mensal comparando 2025 × 2026, filtrável por origem e companhia.
 - Base preenchida com os dados transcritos dos prints de RJ, SP, MG, SC e PR.
+
+## Atualização v4
+- Comparativo 2025 × 2026 limitado aos meses disponíveis nos dois anos.
+- Enquanto 2026 tiver dados até junho, 2025 também aparece apenas de janeiro a junho.
+- Variação percentual mensal exibida diretamente no gráfico comparativo.
+- A direção da variação acompanha o ano selecionado: 2026 vs 2025 ou 2025 vs 2026.
+- KPI "Variação anual" compara a média dos mesmos meses dos dois anos e inverte a comparação ao trocar o filtro de ano.
+
+## Atualização v5
+- Tooltips explicativos adicionados aos KPIs.
+- Ao passar o mouse sobre Tarifa média, Menor tarifa, Maior tarifa e Variação anual, o painel explica o indicador e sua lógica de cálculo.
