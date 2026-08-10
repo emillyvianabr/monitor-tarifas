@@ -261,6 +261,17 @@ code { background:#eef1f5; padding:2px 5px; border-radius:5px; }
   line-height:1.55!important;
 }
 
+
+/* Card do gráfico de evolução por origem */
+.chart-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin: 18px 0;
+}
+
 /* Gráfico de evolução por origem */
 .chart-wrap.tall{
   min-height:360px;
