@@ -2,6 +2,15 @@ const DEFAULT_FILE = 'data/dados.xlsx';
 let workbookData = { tariffs: [], googleFlights: [], measures: [], glossary: [] };
 let charts = {};
 
+const ORIGIN_COLORS = {
+  RJ: '#2563eb',
+  SP: '#d97706',
+  MG: '#7c3aed',
+  SC: '#0891b2',
+  PR: '#db2777'
+};
+const originColor = origin => ORIGIN_COLORS[origin] || '#667085';
+
 const fmtBRL = n => Number.isFinite(n) ? n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '—';
 const fmtPct = n => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${n.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}%` : '—';
 const monthLabel = (year, month) => `${String(month).padStart(2,'0')}/${year}`;
@@ -224,7 +233,11 @@ function updateGoogleFlights(){
       spanGaps:false,
       borderWidth:2.5,
       pointRadius:4,
-      pointHoverRadius:6
+      pointHoverRadius:6,
+      borderColor: originColor(route.origin),
+      backgroundColor: originColor(route.origin),
+      pointBackgroundColor: originColor(route.origin),
+      pointBorderColor: '#ffffff'
     };
   });
 
@@ -263,21 +276,23 @@ function renderMeasures(){
   const costRelief=workbookData.measures.filter(m=>(m.effect||'').includes('↓'));
   const passengerCost=workbookData.measures.filter(m=>(m.effect||'').includes('↑'));
 
-  const card=m=>`<div class="measure-item">
+  const normalizeEffect = effect => String(effect||'').replace('Custos das aéreas','Custos das cias aéreas').replace('Custo das aéreas','Custo das cias aéreas');
+
+  const card=(m,type)=>`<div class="measure-item measure-item--${type}">
     <strong>${m.title}</strong>
     <p class="measure-detail">${m.detail||''}</p>
     ${m.impact?`<div class="measure-impact"><span>Como pode impactar</span><p>${m.impact}</p></div>`:''}
     <div class="measure-meta">
       <span class="tag">${m.period||'Período não informado'}</span>
       <span class="tag">${m.scope||'Abrangência não informada'}</span>
-      ${m.effect?`<span class="tag">${m.effect}</span>`:''}
+      ${m.effect?`<span class="tag measure-effect measure-effect--${type}">${normalizeEffect(m.effect)}</span>`:''}
     </div>
   </div>`;
 
   c.innerHTML=`
     <div class="measure-group-intro">As medidas abaixo não têm o mesmo efeito. Algumas reduzem custos ou pressão financeira das companhias e podem influenciar indiretamente as tarifas; outras, como tarifas aeroportuárias, aumentam o custo final do passageiro, mas <strong>não entram na Tarifa Aérea Média da ANAC</strong>.</div>
-    ${costRelief.length?`<h3 class="measure-group-title">Redução de custos e pressão financeira das aéreas</h3>${costRelief.map(card).join('')}`:''}
-    ${passengerCost.length?`<h3 class="measure-group-title">Aumento do custo total para o passageiro</h3>${passengerCost.map(card).join('')}`:''}
+    ${costRelief.length?`<h3 class="measure-group-title measure-group-title--positive">Redução de custos e pressão financeira das cias aéreas</h3>${costRelief.map(m=>card(m,'positive')).join('')}`:''}
+    ${passengerCost.length?`<h3 class="measure-group-title measure-group-title--negative">Aumento do custo total para o passageiro</h3>${passengerCost.map(m=>card(m,'negative')).join('')}`:''}
   `;
 }
 
@@ -448,7 +463,11 @@ function updateOriginTrendChart(){
     spanGaps: false,
     borderWidth: 2.5,
     pointRadius: 3,
-    pointHoverRadius: 6
+    pointHoverRadius: 6,
+    borderColor: originColor(origin),
+    backgroundColor: originColor(origin),
+    pointBackgroundColor: originColor(origin),
+    pointBorderColor: '#ffffff'
   }));
 
   const canvas = document.getElementById('originTrendChart');

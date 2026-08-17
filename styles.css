@@ -262,6 +262,42 @@ code { background:#eef1f5; padding:2px 5px; border-radius:5px; }
 }
 
 
+
+.measure-item{
+  position:relative;
+  overflow:hidden;
+  transition:border-color .18s ease, background .18s ease;
+}
+.measure-item::before{
+  content:'';
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+}
+.measure-item--positive{
+  border-color:#b7dfcf;
+  background:#fbfefc;
+}
+.measure-item--positive::before{background:#1b7f5c;}
+.measure-item--negative{
+  border-color:#efc8c8;
+  background:#fffdfd;
+}
+.measure-item--negative::before{background:#b54545;}
+.measure-group-title--positive{color:#176b4d;}
+.measure-group-title--negative{color:#9f3434;}
+.measure-effect--positive{
+  background:#e8f6ef;
+  color:#176b4d;
+}
+.measure-effect--negative{
+  background:#fbecec;
+  color:#9f3434;
+}
+.measure-item--positive .measure-impact{border-left-color:#1b7f5c;}
+.measure-item--negative .measure-impact{border-left-color:#b54545;}
+
+
 /* Card do gráfico de evolução por origem */
 .chart-card {
   background: var(--panel);
