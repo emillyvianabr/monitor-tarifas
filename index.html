@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f5f7f3" />
   <title>Monitor de Tarifas Aéreas - Porto Alegre</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -14,14 +15,14 @@
 <body>
   <header class="topbar">
     <div>
-      <p class="eyebrow">INTELIGÊNCIA DE MERCADO</p>
-      <h1>Monitor de Tarifas Aéreas - Porto Alegre</h1>
-      <p class="subtitle">Principais mercados emissores de Gramado e Canela • SP, RJ, MG, SC e PR</p>
+      <p class="eyebrow">INTELIGÊNCIA DE MERCADO · SERRA GAÚCHA</p>
+      <h1>Tarifas aéreas <span>&</span> acesso ao destino</h1>
+      <p class="subtitle">Porto Alegre · principais mercados emissores de Gramado e Canela: SP, RJ, MG, SC e PR.</p>
     </div>
     <div class="top-actions">
       <label class="upload-btn" for="fileInput">Carregar planilha</label>
       <input id="fileInput" type="file" accept=".xlsx,.xls" hidden />
-      <button id="resetBtn" class="secondary-btn">Voltar ao arquivo do GitHub</button>
+      <button id="resetBtn" class="secondary-btn">Usar arquivo do GitHub</button>
     </div>
   </header>
 

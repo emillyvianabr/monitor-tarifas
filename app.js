@@ -3,13 +3,14 @@ let workbookData = { tariffs: [], googleFlights: [], measures: [], glossary: [] 
 let charts = {};
 
 const ORIGIN_COLORS = {
-  RJ: '#2563eb',
-  SP: '#d97706',
-  MG: '#7c3aed',
-  SC: '#0891b2',
-  PR: '#db2777'
+  RJ: '#256b4d',
+  SP: '#79a958',
+  MG: '#718b78',
+  SC: '#489879',
+  PR: '#a18d57'
 };
-const originColor = origin => ORIGIN_COLORS[origin] || '#667085';
+const originColor = origin => ORIGIN_COLORS[origin] || '#78857a';
+const CHART_COLORS = ['#256b4d','#65a765','#a7baaa','#489879','#8cab70','#658b80'];
 
 const fmtBRL = n => Number.isFinite(n) ? n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '—';
 const fmtPct = n => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${n.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}%` : '—';
@@ -171,7 +172,7 @@ function updateKPIs(data){
 }
 
 function chartBaseOptions(){
-  return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#edf0f4'},ticks:{callback:v=>'R$ '+Number(v).toLocaleString('pt-BR'),font:{size:10}}}}};
+  return {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,padding:16,font:{size:10}}},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#727d75'}},y:{grid:{color:'#edf1ed'},border:{display:false},ticks:{callback:v=>'R$ '+Number(v).toLocaleString('pt-BR'),font:{size:10},color:'#727d75'}}}};
 }
 function destroyChart(name){ if(charts[name]){ charts[name].destroy(); delete charts[name]; } }
 
@@ -179,13 +180,13 @@ function updateMonthlyChart(data){
   destroyChart('monthly');
   const months=[...new Set(data.map(r=>`${r.year}-${String(r.month).padStart(2,'0')}`))].sort();
   const airlines=[...new Set(data.map(r=>r.airline))].sort();
-  const datasets=airlines.map(a=>({label:a,data:months.map(k=>{const [y,m]=k.split('-').map(Number);return avg(data.filter(r=>r.airline===a&&r.year===y&&r.month===m).map(r=>r.fare));}),tension:.28,spanGaps:true,borderWidth:2,pointRadius:2}));
+  const datasets=airlines.map((a,index)=>({label:a,data:months.map(k=>{const [y,m]=k.split('-').map(Number);return avg(data.filter(r=>r.airline===a&&r.year===y&&r.month===m).map(r=>r.fare));}),tension:.32,spanGaps:true,borderWidth:2.5,pointRadius:3,borderColor:CHART_COLORS[index%CHART_COLORS.length],backgroundColor:CHART_COLORS[index%CHART_COLORS.length]}));
   charts.monthly=new Chart(document.getElementById('monthlyChart'),{type:'line',data:{labels:months.map(k=>{const [y,m]=k.split('-');return `${m}/${y}`}),datasets},options:chartBaseOptions()});
 }
 
 function updateBarChart(canvasId,name,groups,data,key){
   destroyChart(name);
-  charts[name]=new Chart(document.getElementById(canvasId),{type:'bar',data:{labels:groups,datasets:[{label:'Tarifa média',data:groups.map(g=>avg(data.filter(r=>r[key]===g).map(r=>r.fare))),borderRadius:7,maxBarThickness:54}]},options:{...chartBaseOptions(),plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL(c.raw)}}}}});
+  charts[name]=new Chart(document.getElementById(canvasId),{type:'bar',data:{labels:groups,datasets:[{label:'Tarifa média',data:groups.map(g=>avg(data.filter(r=>r[key]===g).map(r=>r.fare))),backgroundColor:groups.map((group,index)=>key==='origin'?originColor(group):CHART_COLORS[index%CHART_COLORS.length]),borderRadius:7,maxBarThickness:54}]},options:{...chartBaseOptions(),plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtBRL(c.raw)}}}}});
 }
 
 function updateGoogleFlights(){
@@ -374,7 +375,7 @@ function updateYearComparison(){
       const {ctx}=chart;
       const meta=chart.getDatasetMeta(currentYear===2026 ? 1 : 0);
       ctx.save();
-      ctx.font='600 11px Inter, Arial, sans-serif';
+      ctx.font="600 11px 'DM Sans', Arial, sans-serif";
       ctx.textAlign='center';
       ctx.textBaseline='bottom';
 
@@ -411,8 +412,8 @@ function updateYearComparison(){
     data:{
       labels,
       datasets:[
-        {label:'2025',data:y2025,tension:.28,spanGaps:true,borderWidth:2.5,pointRadius:4},
-        {label:'2026',data:y2026,tension:.28,spanGaps:true,borderWidth:2.5,pointRadius:4}
+        {label:'2025',data:y2025,tension:.32,spanGaps:true,borderWidth:2.5,pointRadius:4,borderColor:'#256b4d',backgroundColor:'#256b4d'},
+        {label:'2026',data:y2026,tension:.32,spanGaps:true,borderWidth:3,pointRadius:4,borderColor:'#65a765',backgroundColor:'#65a765'}
       ]
     },
     options,
