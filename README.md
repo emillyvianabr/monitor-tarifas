@@ -1,4 +1,4 @@
-# Dashboard de Tarifas Aéreas — Porto Alegre
+# Tarifas aéreas · Grupo Iter
 
 Dashboard estático preparado para **GitHub Pages** e alimentado diretamente por uma planilha Excel.
 
@@ -121,3 +121,21 @@ SP • RJ • MG • SC • PR
 - Corrigido campo de mês (`month`).
 - O gráfico compara RJ, SP, MG, SC e PR mês a mês.
 - Se "Todos" for escolhido no filtro de ano, usa o ano mais recente para não misturar anos no mesmo eixo.
+
+
+## Identidade visual e destinos (v13)
+
+**Identidade Grupo Iter:** logo (`assets/`), tipografia Stolzl (`assets/fonts/`), paleta teal `#62BAB6` · índigo `#4B4F9E` · azul `#1D6DB6` · rosa `#EB4A75` e texto `#233744`. Nos indicadores de preço, alta aparece em rosa (encarece) e queda em verde (barateia). As cores dos gráficos ficam no topo do `app.js`; as demais em `:root` do `styles.css`.
+
+**Seletor de destino:** abaixo do título, escolha entre **Porto Alegre** e **Rio de Janeiro**. O dashboard filtra a planilha pela coluna `Aeroporto_Destino`.
+
+- **Porto Alegre** (`POA`): dados atuais.
+- **Rio de Janeiro** (`GIG`, `SDU` ou `RIO`): enquanto a planilha não tiver linhas com esses destinos, aparece a mensagem **"Estamos trabalhando nisso"** (a aba mostra a etiqueta *em breve*).
+
+**Como liberar o Rio de Janeiro:** inclua linhas com `Aeroporto_Destino = GIG` (ou `SDU`) nas abas `BASE_TARIFAS_ANAC` e/ou `BASE_GOOGLE_FLIGHTS`, mantendo as demais colunas. Não é preciso mexer no código: a etiqueta *em breve* some e os gráficos passam a ser exibidos, com os filtros e os mercados emissores calculados só com os dados do destino.
+
+**Incentivos e medidas por destino (opcional):** adicione uma coluna `Destino` na aba `INCENTIVOS_MEDIDAS` (ex.: `POA`, `GIG` ou `Rio de Janeiro`; vários separados por vírgula). Linhas sem valor continuam valendo para todos os destinos.
+
+**Novos destinos:** acrescente um item em `DESTINATIONS`, no começo do `app.js` (nome, códigos de aeroporto e subtítulo).
+
+**Link direto:** `index.html#destino=rio` abre já no Rio de Janeiro.

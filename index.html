@@ -3,26 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#f5f7f3" />
-  <title>Monitor de Tarifas Aéreas - Porto Alegre</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#4B4F9E" />
+  <title>Tarifas aéreas</title>
+  <link rel="icon" type="image/png" href="assets/symbol-color.png" />
+  <link rel="preload" href="assets/fonts/Stolzl-Regular.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/Stolzl-Bold.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css?v=20261014-1" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <p class="eyebrow">INTELIGÊNCIA DE MERCADO · SERRA GAÚCHA</p>
-      <h1>Tarifas aéreas <span>&</span> acesso ao destino</h1>
-      <p class="subtitle">Porto Alegre · principais mercados emissores de Gramado e Canela: SP, RJ, MG, SC e PR.</p>
-    </div>
-    <div class="top-actions">
-      <label class="upload-btn" for="fileInput">Carregar planilha</label>
-      <input id="fileInput" type="file" accept=".xlsx,.xls" hidden />
-      <button id="resetBtn" class="secondary-btn">Usar arquivo do GitHub</button>
+  <div class="accent-bar"></div>
+  <header class="site-header">
+    <div class="topbar">
+      <div class="topbar-main">
+        <img class="brand-logo" src="assets/logo-grupo-iter-color.png" alt="Grupo Iter" width="158" height="38" />
+        <p class="eyebrow">INTELIGÊNCIA DE MERCADO</p>
+        <h1>Tarifas <em>aéreas</em></h1>
+        <p class="subtitle" id="destSubtitle">Porto Alegre · principais mercados emissores de Gramado e Canela: SP, RJ, MG, SC e PR.</p>
+        <div class="dest-switch">
+          <span class="dest-label" id="destLabel">Destino</span>
+          <div id="destTabs" class="dest-tabs" role="tablist" aria-labelledby="destLabel"></div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <label class="upload-btn" for="fileInput">Carregar planilha</label>
+        <input id="fileInput" type="file" accept=".xlsx,.xls" hidden />
+        <button id="resetBtn" class="secondary-btn">Usar arquivo do GitHub</button>
+      </div>
     </div>
   </header>
 
@@ -35,7 +43,8 @@
       <span id="updatedAt">Carregando dados...</span>
     </section>
 
-    <section class="filters panel">
+    <div id="dashboardContent">
+    <section class="filters panel" id="filtersPanel">
       <div class="section-title-row">
         <div>
           <p class="eyebrow">FILTROS</p>
@@ -126,7 +135,7 @@
         <div>
           <span class="eyebrow">COMPARAÇÃO POR ORIGEM</span>
           <h2>Evolução mensal da tarifa média por origem</h2>
-          <p class="section-desc">Compara a tarifa média ANAC mês a mês entre RJ, SP, MG, SC e PR para identificar quais mercados estão encarecendo ou barateando mais rapidamente.</p>
+          <p class="section-desc">Compara a tarifa média ANAC mês a mês entre os mercados emissores do destino selecionado para identificar quais mercados estão encarecendo ou barateando mais rapidamente.</p>
         </div>
       </div>
       <div class="chart-wrap tall">
@@ -179,12 +188,21 @@
         </table>
       </div>
     </section>
+    </div><!-- /#dashboardContent -->
+
+    <section id="comingSoon" class="coming-soon panel" hidden aria-live="polite">
+      <div class="cs-emoji" role="img" aria-label="Pessoa trabalhando">👷</div>
+      <h2>Estamos trabalhando nisso</h2>
+      <p id="csText">Os gráficos de tarifas aéreas deste destino ainda estão sendo preparados. Em breve você acompanha aqui as mesmas análises.</p>
+      <button type="button" id="csBack" class="secondary-btn">Ver Porto Alegre</button>
+    </section>
   </main>
 
   <footer>
-    Dashboard preparado para GitHub Pages • atualização via <code>data/dados.xlsx</code>
+    <img src="assets/logo-grupo-iter-color.png" alt="Grupo Iter" width="91" height="22" />
+    <span>Dashboard preparado para GitHub Pages • atualização via <code>data/dados.xlsx</code></span>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20261014-1"></script>
 </body>
 </html>

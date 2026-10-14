@@ -1,16 +1,48 @@
 const DEFAULT_FILE = 'data/dados.xlsx';
 let workbookData = { tariffs: [], googleFlights: [], measures: [], glossary: [] };
+let dataLoaded = false;
 let charts = {};
 
+// Paleta Grupo Iter: índigo, teal, azul, rosa e slate
 const ORIGIN_COLORS = {
-  RJ: '#256b4d',
-  SP: '#79a958',
-  MG: '#718b78',
-  SC: '#489879',
-  PR: '#a18d57'
+  RJ: '#4B4F9E',
+  SP: '#62BAB6',
+  MG: '#1D6DB6',
+  SC: '#EB4A75',
+  PR: '#53778B'
 };
-const originColor = origin => ORIGIN_COLORS[origin] || '#78857a';
-const CHART_COLORS = ['#256b4d','#65a765','#a7baaa','#489879','#8cab70','#658b80'];
+const originColor = origin => ORIGIN_COLORS[origin] || '#7693A1';
+const CHART_COLORS = ['#4B4F9E','#62BAB6','#1D6DB6','#EB4A75','#53778B','#7693A1'];
+const UI = { ink:'#233744', muted:'#53778B', grid:'#E8EEF1', up:'#EB4A75', down:'#1F8A68' };
+const PREFERRED_ORIGINS = ['RJ','SP','MG','SC','PR'];
+
+/* ---------- Destinos ----------
+   Cada destino filtra a planilha pelo código do aeroporto de destino (coluna Aeroporto_Destino).
+   Um destino só mostra gráficos quando a planilha já tem linhas para ele; enquanto isso,
+   aparece a mensagem "Estamos trabalhando nisso". Para liberar o Rio de Janeiro, basta
+   incluir linhas com Aeroporto_Destino = GIG (ou SDU) nas abas BASE_TARIFAS_ANAC / BASE_GOOGLE_FLIGHTS. */
+const DESTINATIONS = [
+  { id:'POA', slug:'poa', label:'Porto Alegre', codes:['POA'],
+    subtitle:'Porto Alegre · principais mercados emissores de Gramado e Canela: SP, RJ, MG, SC e PR.' },
+  { id:'RIO', slug:'rio', label:'Rio de Janeiro', codes:['GIG','SDU','RIO'],
+    subtitle:'Rio de Janeiro · principais mercados emissores do destino.',
+    subtitleSoon:'Rio de Janeiro · análise em preparação.' }
+];
+let currentDestinationId = 'POA';
+const currentDestination = () => DESTINATIONS.find(d => d.id === currentDestinationId) || DESTINATIONS[0];
+const inDestination = (row, dest = currentDestination()) => dest.codes.includes(String(row.destination || '').toUpperCase());
+const scopedTariffs = () => workbookData.tariffs.filter(r => inDestination(r));
+const scopedFlights = () => workbookData.googleFlights.filter(r => inDestination(r));
+const destinationHasData = dest => workbookData.tariffs.some(r => inDestination(r, dest)) || workbookData.googleFlights.some(r => inDestination(r, dest));
+const normText = t => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+// Medidas podem trazer uma coluna opcional "Destino" (ex.: POA, GIG ou "Rio de Janeiro"); sem ela valem para todos.
+function measureMatches(m, dest = currentDestination()){
+  if (!m.destination) return true;
+  return m.destination.split(/[,;/|]/).map(normText).some(t => !t || t === 'todos' || dest.codes.some(c => normText(c) === t) || normText(dest.label) === t);
+}
+
+Chart.defaults.font.family = "Stolzl, system-ui, -apple-system, 'Segoe UI', sans-serif";
+Chart.defaults.color = UI.muted;
 
 const fmtBRL = n => Number.isFinite(n) ? n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '—';
 const fmtPct = n => Number.isFinite(n) ? `${n > 0 ? '+' : ''}${n.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}%` : '—';
@@ -43,19 +75,20 @@ function normalizeWorkbook(wb){
     date: excelDate(r.Mes_Referencia),
     year: num(r.Ano), month: num(r.Mes_Num), monthName: r.Mes || '',
     origin: r.Estado_Origem || 'Não informado', airport: r.Aeroporto_Origem || '',
-    destination: r.Aeroporto_Destino || 'POA', airline: r.Companhia || 'Não informado',
+    destination: String(r.Aeroporto_Destino || 'POA').trim().toUpperCase(), airline: r.Companhia || 'Não informado',
     fare: num(r['Tarifa_Media_R$']), source: r.Fonte || '', updated: excelDate(r.Data_Atualizacao), note:r.Observacao || ''
   })).filter(r => r.year && r.month && Number.isFinite(r.fare));
 
   const googleFlights = rowsFromSheet(wb,'BASE_GOOGLE_FLIGHTS').map(r => ({
     searchDate: excelDate(r.Data_Busca), origin:r.Estado_Origem || 'Não informado', airport:r.Aeroporto_Origem || '',
+    destination:String(r.Aeroporto_Destino || 'POA').trim().toUpperCase(),
     airline:r.Companhia || 'Não informado', price:num(r['Preco_R$']), tripType:r.Tipo_Viagem || '',
     outbound:excelDate(r.Data_Ida), returnDate:excelDate(r.Data_Volta),
     source:r.Fonte || 'Google Flights', note:r.Observacao || ''
   })).filter(r => r.searchDate);
 
   const measures = rowsFromSheet(wb,'INCENTIVOS_MEDIDAS').filter(r => r.Medida_Fator).map(r => ({
-    title:r.Medida_Fator, period:r.Inicio_Periodo, scope:r.Abrangencia, effect:r.Efeito_Esperado, detail:r.Detalhe, impact:r.Como_Impacta || ''
+    title:r.Medida_Fator, period:r.Inicio_Periodo, scope:r.Abrangencia, destination:String(r.Destino || '').trim(), effect:r.Efeito_Esperado, detail:r.Detalhe, impact:r.Como_Impacta || ''
   }));
 
   const glossaryRows = rowsFromSheet(wb,'GLOSSARIO_METODOLOGIA',{range:2});
@@ -64,6 +97,7 @@ function normalizeWorkbook(wb){
   }));
 
   workbookData = { tariffs, googleFlights, measures, glossary };
+  dataLoaded = true;
 }
 
 async function loadDefault(){
@@ -92,7 +126,7 @@ function populateSelect(id, values){
 }
 
 function setupFilters(){
-  const t = workbookData.tariffs;
+  const t = scopedTariffs();
   populateSelect('originFilter', t.map(r=>r.origin));
   populateSelect('airlineFilter', t.map(r=>r.airline));
   populateSelect('yearFilter', t.map(r=>String(r.year)));
@@ -108,7 +142,7 @@ function filteredTariffs(){
   const origin=document.getElementById('originFilter').value;
   const airline=document.getElementById('airlineFilter').value;
   const year=document.getElementById('yearFilter').value;
-  return workbookData.tariffs.filter(r =>
+  return scopedTariffs().filter(r =>
     (origin==='TODOS'||r.origin===origin) &&
     (airline==='TODOS'||r.airline===airline) &&
     (year==='TODOS'||String(r.year)===year)
@@ -135,7 +169,7 @@ function updateKPIs(data){
   const airline=document.getElementById('airlineFilter').value;
   const selectedYear=document.getElementById('yearFilter').value;
 
-  const comparisonData=workbookData.tariffs.filter(r =>
+  const comparisonData=scopedTariffs().filter(r =>
     (origin==='TODOS'||r.origin===origin) &&
     (airline==='TODOS'||r.airline===airline) &&
     (r.year===2025||r.year===2026)
@@ -172,7 +206,7 @@ function updateKPIs(data){
 }
 
 function chartBaseOptions(){
-  return {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,padding:16,font:{size:10}}},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#727d75'}},y:{grid:{color:'#edf1ed'},border:{display:false},ticks:{callback:v=>'R$ '+Number(v).toLocaleString('pt-BR'),font:{size:10},color:'#727d75'}}}};
+  return {responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,padding:16,font:{size:10}}},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},color:UI.muted}},y:{grid:{color:UI.grid},border:{display:false},ticks:{callback:v=>'R$ '+Number(v).toLocaleString('pt-BR'),font:{size:10},color:UI.muted}}}};
 }
 function destroyChart(name){ if(charts[name]){ charts[name].destroy(); delete charts[name]; } }
 
@@ -191,7 +225,7 @@ function updateBarChart(canvasId,name,groups,data,key){
 
 function updateGoogleFlights(){
   const origin=document.getElementById('originFilter').value;
-  let all=workbookData.googleFlights.filter(r=>origin==='TODOS'||r.origin===origin);
+  let all=scopedFlights().filter(r=>origin==='TODOS'||r.origin===origin);
 
   const empty=document.getElementById('gfEmpty');
   destroyChart('gf');
@@ -274,8 +308,9 @@ function renderMeasures(){
     return;
   }
 
-  const costRelief=workbookData.measures.filter(m=>(m.effect||'').includes('↓'));
-  const passengerCost=workbookData.measures.filter(m=>(m.effect||'').includes('↑'));
+  const measures=workbookData.measures.filter(m=>measureMatches(m));
+  const costRelief=measures.filter(m=>(m.effect||'').includes('↓'));
+  const passengerCost=measures.filter(m=>(m.effect||'').includes('↑'));
 
   const normalizeEffect = effect => String(effect||'').replace('Custos das aéreas','Custos das cias aéreas').replace('Custo das aéreas','Custo das cias aéreas');
 
@@ -325,9 +360,10 @@ function renderTable(data){
 }
 
 function updateTimestamp(){
-  const dates=workbookData.tariffs.map(r=>r.updated).filter(Boolean);
+  const tariffs=scopedTariffs();
+  const dates=tariffs.map(r=>r.updated).filter(Boolean);
   const latest=dates.length?new Date(Math.max(...dates)):null;
-  document.getElementById('updatedAt').textContent=latest?`Última atualização informada: ${latest.toLocaleDateString('pt-BR')}`:`${workbookData.tariffs.length} tarifas válidas carregadas`;
+  document.getElementById('updatedAt').textContent=latest?`Última atualização informada: ${latest.toLocaleDateString('pt-BR')}`:`${tariffs.length} tarifas válidas carregadas`;
 }
 
 
@@ -338,7 +374,7 @@ function updateYearComparison(){
   const airline=document.getElementById('airlineFilter').value;
   const selectedYear=document.getElementById('yearFilter').value;
 
-  const data=workbookData.tariffs.filter(r =>
+  const data=scopedTariffs().filter(r =>
     (origin==='TODOS'||r.origin===origin) &&
     (airline==='TODOS'||r.airline===airline) &&
     (r.year===2025||r.year===2026)
@@ -375,7 +411,7 @@ function updateYearComparison(){
       const {ctx}=chart;
       const meta=chart.getDatasetMeta(currentYear===2026 ? 1 : 0);
       ctx.save();
-      ctx.font="600 11px 'DM Sans', Arial, sans-serif";
+      ctx.font="700 11px Stolzl, system-ui, sans-serif";
       ctx.textAlign='center';
       ctx.textBaseline='bottom';
 
@@ -383,7 +419,7 @@ function updateYearComparison(){
         if(!Number.isFinite(variation) || !meta.data[i]) return;
         const point=meta.data[i];
         const text=`${variation>0?'+':''}${variation.toFixed(1).replace('.',',')}%`;
-        ctx.fillStyle=variation>0 ? '#b42318' : variation<0 ? '#027a48' : '#667085';
+        ctx.fillStyle=variation>0 ? UI.up : variation<0 ? UI.down : UI.muted;
         ctx.fillText(text, point.x, point.y-10);
       });
       ctx.restore();
@@ -391,7 +427,7 @@ function updateYearComparison(){
   };
 
   const options=chartBaseOptions();
-  options.layout={padding:{top:24}};
+  options.layout={padding:{top:24,right:30,left:6}};
   options.plugins.tooltip={
     mode:'index',
     intersect:false,
@@ -412,8 +448,8 @@ function updateYearComparison(){
     data:{
       labels,
       datasets:[
-        {label:'2025',data:y2025,tension:.32,spanGaps:true,borderWidth:2.5,pointRadius:4,borderColor:'#256b4d',backgroundColor:'#256b4d'},
-        {label:'2026',data:y2026,tension:.32,spanGaps:true,borderWidth:3,pointRadius:4,borderColor:'#65a765',backgroundColor:'#65a765'}
+        {label:'2025',data:y2025,tension:.32,spanGaps:true,borderWidth:2.5,pointRadius:4,borderColor:'#62BAB6',backgroundColor:'#62BAB6'},
+        {label:'2026',data:y2026,tension:.32,spanGaps:true,borderWidth:3,pointRadius:4,borderColor:'#4B4F9E',backgroundColor:'#4B4F9E'}
       ]
     },
     options,
@@ -429,7 +465,8 @@ function updateOriginTrendChart(){
   const airline = document.getElementById('airlineFilter').value;
 
   // Compara todas as origens entre si; por isso ignora o filtro principal de origem.
-  let data = workbookData.tariffs.slice();
+  const scoped = scopedTariffs();
+  let data = scoped.slice();
 
   if(yearValue !== 'TODOS'){
     data = data.filter(r => String(r.year) === yearValue);
@@ -444,7 +481,9 @@ function updateOriginTrendChart(){
     data = data.filter(r => r.airline === airline);
   }
 
-  const origins = ['RJ','SP','MG','SC','PR'];
+  // Mercados emissores presentes neste destino (RJ, SP, MG, SC, PR primeiro; novos entram depois)
+  const presentOrigins = [...new Set(scoped.map(r => r.origin).filter(Boolean))];
+  const origins = [...PREFERRED_ORIGINS.filter(o => presentOrigins.includes(o)), ...presentOrigins.filter(o => !PREFERRED_ORIGINS.includes(o)).sort()];
   const months = [...new Set(data.map(r => r.month).filter(Number.isFinite))]
     .sort((a,b)=>a-b);
 
@@ -502,7 +541,61 @@ function renderFiltered(){
   updateOriginTrendChart();
 }
 
+/* ---------- Seletor de destino ---------- */
+function buildDestinationTabs(){
+  const host=document.getElementById('destTabs');
+  host.innerHTML=DESTINATIONS.map(d=>{
+    const ready=!dataLoaded||destinationHasData(d), selected=d.id===currentDestinationId;
+    return `<button type="button" role="tab" class="dest-tab" data-dest="${d.id}" aria-selected="${selected}" tabindex="${selected?0:-1}">${d.label}${ready?'':'<span class="dest-soon">em breve</span>'}</button>`;
+  }).join('');
+}
+function selectDestination(id, {updateHash=true}={}){
+  if(!DESTINATIONS.some(d=>d.id===id)) return;
+  currentDestinationId=id;
+  if(updateHash){
+    try{ history.replaceState(null,'','#destino='+currentDestination().slug); }catch(e){}
+  }
+  renderAll();
+}
+function destinationFromHash(){
+  const m=(location.hash||'').match(/destino=([a-z]+)/i);
+  const found=m&&DESTINATIONS.find(d=>d.slug===m[1].toLowerCase());
+  return found?found.id:null;
+}
+document.getElementById('destTabs').addEventListener('click',e=>{
+  const b=e.target.closest('[data-dest]'); if(b) selectDestination(b.dataset.dest);
+});
+document.getElementById('destTabs').addEventListener('keydown',e=>{
+  if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft') return;
+  const i=DESTINATIONS.findIndex(d=>d.id===currentDestinationId);
+  const next=DESTINATIONS[(i+(e.key==='ArrowRight'?1:-1)+DESTINATIONS.length)%DESTINATIONS.length];
+  selectDestination(next.id);
+  document.querySelector(`[data-dest="${next.id}"]`)?.focus();
+});
+document.getElementById('csBack').addEventListener('click',()=>{
+  const first=DESTINATIONS.find(d=>destinationHasData(d))||DESTINATIONS[0];
+  selectDestination(first.id);
+});
+
 function renderAll(){
+  const dest=currentDestination();
+  const ready=destinationHasData(dest);
+  buildDestinationTabs();
+  document.getElementById('destSubtitle').textContent=ready?dest.subtitle:(dest.subtitleSoon||dest.subtitle);
+
+  // Destino sem dados: mostra "Estamos trabalhando nisso" e esconde os gráficos.
+  document.getElementById('dashboardContent').hidden=!ready;
+  const soon=document.getElementById('comingSoon');
+  soon.hidden=ready;
+  if(!ready){
+    Object.keys(charts).forEach(destroyChart);
+    const back=DESTINATIONS.find(d=>destinationHasData(d));
+    document.getElementById('csText').innerHTML=`Os gráficos de tarifas aéreas para <strong>${dest.label}</strong> ainda estão sendo preparados. Em breve você acompanha aqui as mesmas análises disponíveis para ${back?back.label:'os demais destinos'}.`;
+    const btn=document.getElementById('csBack');
+    btn.hidden=!back; if(back) btn.textContent=`Ver ${back.label}`;
+    document.getElementById('updatedAt').textContent='Dados em preparação';
+    return;
+  }
   setupFilters(); updateTimestamp(); renderFiltered(); updateGoogleFlights(); renderMeasures(); renderMethodology();
 }
 
@@ -525,4 +618,13 @@ document.getElementById('fileInput').addEventListener('change',async e=>{
   document.getElementById('dataSourceLabel').textContent=`Fonte temporária: ${file.name}`; renderAll();
 });
 
+const hashDest=destinationFromHash(); if(hashDest) currentDestinationId=hashDest;
+buildDestinationTabs();
 loadDefault();
+
+// A Stolzl é usada dentro dos gráficos (canvas): redesenha quando a fonte terminar de carregar.
+if(document.fonts&&document.fonts.load){
+  Promise.all([document.fonts.load('400 12px Stolzl'),document.fonts.load('700 12px Stolzl')]).then(()=>{
+    if(workbookData.tariffs.length && destinationHasData(currentDestination())){ renderFiltered(); updateGoogleFlights(); }
+  }).catch(()=>{});
+}
